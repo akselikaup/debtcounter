@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import './App.css';
 
 interface Suoritus {
@@ -8,15 +8,102 @@ interface Suoritus {
 }
 
 const App : React.FC = () => {
-  const [suoritus, setSuoritus] = useState<Suoritus[]>([]);
-  const [paaoma, setPaaoma] = useState<number>(0);
-  const [paaomaSyotto, setPaaomaSyotto] = useState<number>();
-  const [paaomaAsetettu, setPaaomaAsetettu] = useState(false);
-  const [asetettuPaaoma, setAsetettuPaaoma] = useState<number>();
-  const [summa, setSumma] = useState<number>();
-  const [pvm, setPvm] = useState<Date>();
-  const [maksettuSumma, setMaksettuSumma] = useState<number>(0);
-  const [ohjeet, setOhjeet] = useState(false);
+
+
+  const [suoritus, setSuoritus] = useState<Suoritus[]>(() => {
+    const stored = localStorage.getItem("suoritus");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed.map((item: any) => ({
+          ...item,
+          pvm: new Date(item.pvm)
+        }));
+      } catch (e) {
+        console.error("Virhe suoritusten latauksessa:", e);
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const [paaoma, setPaaoma] = useState<number | undefined>(() => {
+    const stored = localStorage.getItem("paaoma");
+    return stored ? JSON.parse(stored) : 0;
+  });
+
+  const [paaomaSyotto, setPaaomaSyotto] = useState<number | undefined>(() => {
+    const stored = localStorage.getItem("paaomaSyotto");
+    return stored ? JSON.parse(stored) : 0;
+  });
+
+  const [paaomaAsetettu, setPaaomaAsetettu] = useState<boolean>(() => {
+    const stored = localStorage.getItem("paaomaAsetettu");
+    return stored ? JSON.parse(stored) : false;
+  });
+
+  const [asetettuPaaoma, setAsetettuPaaoma] = useState<number | undefined>(() => {
+    const stored = localStorage.getItem("asetettuPaaoma");
+    return stored ? JSON.parse(stored) : 0;
+  });
+
+  const [summa, setSumma] = useState<number | undefined>(() => {
+    const stored = localStorage.getItem("summa");
+    return stored ? JSON.parse(stored) : 0;
+  });
+
+  const [pvm, setPvm] = useState<Date | undefined>(() => {
+    const stored = localStorage.getItem("pvm");
+    return stored ? new Date(stored) : undefined;
+  });
+
+  const [maksettuSumma, setMaksettuSumma] = useState<number | undefined>(() => {
+    const stored = localStorage.getItem("maksettuSumma");
+    return stored ? JSON.parse(stored) : 0;
+  });
+
+  const [ohjeet, setOhjeet] = useState<boolean>(() => {
+    const stored = localStorage.getItem("ohjeet");
+    return stored ? JSON.parse(stored) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("suoritus", JSON.stringify(suoritus));
+  }, [suoritus]);
+
+  useEffect(() => {
+    if (pvm) {
+      localStorage.setItem("pvm", pvm.toISOString());
+    }
+  }, [pvm]);
+
+  useEffect(() => {
+    localStorage.setItem("ohjeet", JSON.stringify(ohjeet));
+  }, [ohjeet]);
+
+  useEffect(() => {
+    localStorage.setItem("paaomaAsetettu", JSON.stringify(paaomaAsetettu));
+  }, [paaomaAsetettu]);
+
+  useEffect(() => {
+    localStorage.setItem("paaoma", paaoma.toString());
+  }, [paaoma]);
+
+  useEffect(() => {
+    localStorage.setItem("paaomaSyotto", paaomaSyotto.toString());
+  }, [paaomaSyotto]);
+
+  useEffect(() => {
+    localStorage.setItem("asetettuPaaoma", asetettuPaaoma.toString());
+  }, [asetettuPaaoma]);
+
+  useEffect(() => {
+    localStorage.setItem("summa", summa.toString());
+  }, [summa]);
+
+  useEffect(() => {
+    localStorage.setItem("maksettuSumma", maksettuSumma.toString());
+  }, [maksettuSumma]);
 
 
   const lisaaSuoritus = () => {
@@ -62,6 +149,22 @@ const App : React.FC = () => {
   const piilotaOhjeet = () => {
     setOhjeet(false);
   }
+
+  function nollaaKaikki(): void {
+  const vahvista = window.confirm("Haluatko varmasti nollata kaikki tiedot? Nollaaminen tyhjentää koko lomakkeen, eikä tätä voi perua.");
+    if (vahvista) {
+      setAsetettuPaaoma(undefined);
+      setMaksettuSumma(0);
+      setPaaomaAsetettu(false);
+      setPaaoma(0);
+      setSumma(undefined);
+      setSuoritus([]);
+      setPaaomaSyotto(undefined);
+      setPvm(undefined);
+      setOhjeet(false);
+      localStorage.clear();
+    };
+  };
 
   return (
     <div className="container">
@@ -138,32 +241,18 @@ const App : React.FC = () => {
           </tfoot>
         </table>
 
- {/*       <div className="inputContainer">
-          <input
-            type="number"
-            placeholder="Suorituksen summa"
-            value={summa}
-            onChange={(e) => setSumma(Number(e.target.value))}>
-          </input>
-
-          <input
-            type="Date"
-            placeholder="Suorituksen päivämäärä"
-            value={pvm ? pvm.toISOString().split('T')[0] : ''}
-            onChange={(e) => setPvm(new Date(e.target.value))}>
-          </input>
-
-          <button onClick={lisaaSuoritus}>Lisää</button>
-        </div> */}
-        {!ohjeet && (
-          <button onClick={naytaOhjeet}>Näytä käyttöohjeet</button>
-        )}
-        {ohjeet && (
-          <div className="ohjeet">
-            <button onClick={piilotaOhjeet}>Piilota käyttöohjeet</button>
-            <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Alias voluptas atque consequuntur, in animi expedita sunt doloribus quisquam quis consectetur laborum aliquam amet tempora impedit assumenda. Officiis quasi facere obcaecati.</p>
-          </div>
-        )}
+        <div className="alapainikkeet">
+          <button onClick={nollaaKaikki}>Nollaa kaikki</button>
+          {!ohjeet && (
+            <button onClick={naytaOhjeet}>Näytä käyttöohjeet</button>
+          )}
+          {ohjeet && (
+            <div className="ohjeet">
+              <button onClick={piilotaOhjeet}>Piilota käyttöohjeet</button>
+              <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Alias voluptas atque consequuntur, in animi expedita sunt doloribus quisquam quis consectetur laborum aliquam amet tempora impedit assumenda. Officiis quasi facere obcaecati.</p>
+            </div>
+          )}
+        </div>
     </div>
   )
 }
