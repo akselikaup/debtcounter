@@ -67,15 +67,11 @@ const App : React.FC = () => {
     return stored ? JSON.parse(stored) : false;
   });
 
+  const [ilmoitus, setIlmoitus] = useState<string | null>(null);
+
   useEffect(() => {
     localStorage.setItem("suoritus", JSON.stringify(suoritus));
   }, [suoritus]);
-
-  useEffect(() => {
-    if (pvm) {
-      localStorage.setItem("pvm", pvm.toISOString());
-    }
-  }, [pvm]);
 
   useEffect(() => {
     localStorage.setItem("ohjeet", JSON.stringify(ohjeet));
@@ -86,38 +82,47 @@ const App : React.FC = () => {
   }, [paaomaAsetettu]);
 
   useEffect(() => {
-    localStorage.setItem("paaoma", paaoma.toString());
+    localStorage.setItem("paaoma", JSON.stringify(paaoma));
   }, [paaoma]);
 
   useEffect(() => {
-    localStorage.setItem("paaomaSyotto", paaomaSyotto.toString());
+    localStorage.setItem("paaomaSyotto", JSON.stringify(paaomaSyotto));
   }, [paaomaSyotto]);
 
   useEffect(() => {
-    localStorage.setItem("asetettuPaaoma", asetettuPaaoma.toString());
+    localStorage.setItem("asetettuPaaoma", JSON.stringify(asetettuPaaoma));
   }, [asetettuPaaoma]);
 
   useEffect(() => {
-    localStorage.setItem("summa", summa.toString());
+    localStorage.setItem("summa", JSON.stringify(summa));
   }, [summa]);
 
   useEffect(() => {
-    localStorage.setItem("maksettuSumma", maksettuSumma.toString());
+    localStorage.setItem("maksettuSumma", JSON.stringify(maksettuSumma));
   }, [maksettuSumma]);
 
 
   const lisaaSuoritus = () => {
-    const uusiSuoritus: Suoritus = {
-      id: Date.now(),
-      summa: Number(summa),
-      pvm: pvm ?? new Date()
+    if (!summa || !pvm) {
+      setIlmoitus("Syötä sekä summa että päivämäärä ennen lisäämistä.")
+      setTimeout(() => setIlmoitus(null), 3000);
+      return
+    }
+
+    if (summa && pvm) {
+      const uusiSuoritus: Suoritus = {
+        id: Date.now(),
+        summa: Number(summa),
+        pvm: pvm ?? new Date()
+      };
+
+    setSuoritus([...suoritus, uusiSuoritus]);
+    if (paaoma !== undefined && summa !== undefined && maksettuSumma !== undefined) {
+      setPaaoma(paaoma - summa);
+      setMaksettuSumma(maksettuSumma + summa)
+    }
+    setSumma(0);
     };
-  setSuoritus([...suoritus, uusiSuoritus]);
-  if (paaoma !== undefined && summa !== undefined) {
-    setPaaoma(paaoma - summa);
-    setMaksettuSumma(maksettuSumma + summa)
-  }
-  setSumma(0);
   };
 
   const poistaTapahtuma = (id: number) => {
@@ -191,7 +196,9 @@ const App : React.FC = () => {
           <>
             <div>
               <h4>Asetettu pääoma: {asetettuPaaoma} euroa</h4>
-              <button onClick={muokkaa}>Muokkaa pääomaa</button>
+              <div className="keskitetty">
+                <button onClick={muokkaa}>Muokkaa pääomaa</button>
+              </div>
             </div>
             <div>
             <h4>Jäljellä oleva velkapääoma: {paaoma} euroa</h4>
@@ -204,11 +211,13 @@ const App : React.FC = () => {
             <tr>
               <th>Suorituksen summa</th>
               <th>Suorituksen päivämäärä</th>
-              <th>Poista suoritus</th>
+              <th>{suoritus.length === 0 ? 'Lisää suoritus' : 'Poista suoritus'}</th>
             </tr>
           </thead>
           <tbody>
-            {suoritus.map(item => (
+            {[...suoritus]
+            .sort((a,b) => a.pvm.getTime() - b.pvm.getTime())
+            .map(item => (
               <tr key={item.id}>
                 <td>{item.summa} €</td>
                 <td>{item.pvm.toLocaleDateString()}</td>
@@ -231,6 +240,7 @@ const App : React.FC = () => {
                   type="date"
                   placeholder="Suorituksen päivämäärä"
                   value={pvm ? pvm.toISOString().split('T')[0] : ''}
+                  max={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setPvm(new Date(e.target.value))}
                 />
               </td>
@@ -241,17 +251,46 @@ const App : React.FC = () => {
           </tfoot>
         </table>
 
+        {ilmoitus && (
+          <div className="virhe">
+            {ilmoitus}
+          </div>
+        )}
+
         <div className="alapainikkeet">
-          <button onClick={nollaaKaikki}>Nollaa kaikki</button>
           {!ohjeet && (
             <button onClick={naytaOhjeet}>Näytä käyttöohjeet</button>
           )}
           {ohjeet && (
             <div className="ohjeet">
-              <button onClick={piilotaOhjeet}>Piilota käyttöohjeet</button>
-              <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Alias voluptas atque consequuntur, in animi expedita sunt doloribus quisquam quis consectetur laborum aliquam amet tempora impedit assumenda. Officiis quasi facere obcaecati.</p>
+              <div className="keskitetty">
+                <button onClick={piilotaOhjeet}>Piilota käyttöohjeet</button>
+              </div>
+              <div>
+                <h3>1. Pääoman syöttäminen ja muokkaaminen</h3>
+                <p>Voit syöttää pääoman ylimpään kenttään kun avaat sivun ensimmäisen kerran. Kun olet syöttänyt pääoman, 
+                  poistuu pääoman syöttämisen mahdollisuus, mutta voit muokata pääoman suuruutta painamalla "muokkaa pääomaa"-painiketta, 
+                  joka ilmestyy pääoman syöttämisen jälkeen. Pääoman muokkaaminen ei poista jo tehtyjä suorituksia. "Vanhasta" pääomasta vähennetyt suoritukset
+                  otetaan huomioon pääoman muokkaamisen jälkeen uudessa velkapääomassa</p>
+              </div>
+              <div>
+                <h3>2. Suorituksen lisääminen</h3>
+                <p>Voit lisätä uuden maksusuorituksen syöttämällä suorituksen summan taulukon alimpaan vapaaseen kenttään sekä valitsemalla summan viereisestä
+                  kentästä maksupäivämäärän. Maksupäivämäärän voi valita vapaasti kuluvasta päivästä taaksepäin, joten suorituksen voi merkitä myös takautuvasti.
+                  Lisätyn suorituksen voi poistaa, suoritukset näkyvät listassa merkitsemäsi suorituspäivän mukaan kronologisessa järjestyksessä.
+                </p>
+                <p><strong>Jos merkitset suorituksen muuna kuin täysinä euroina, erota eurot ja sentit toisistaan pilkulla, ei pisteellä!</strong></p>
+                <p>Muista lisätä sekä summa että päivämäärä ennen suorituksen lisäämistä.</p>
+              </div>
+              <div>
+                <h3>3. Taulukon tyhjentäminen/nollaaminen</h3>
+                <p>Jos haluat aloittaa puhtaalta pöydältä, voit painaa painiketta "nollaa kaikki". Tämä tyhjentää lomakkeen täysin alkuasetelmaan, 
+                  eli poistaa kaikki suoritukset ja poistaa velkapääoman. Painikkeen painaminen vahingossa ei kaada maailmaa, sillä ennen kuin taulukko tyhjenee täysin, kysyy
+                  ohjelma vielä varmuuden vuoksi, haluatko varmasti nollata kaiken. <strong>Nollaamista ei voi perua!</strong></p>
+              </div>
             </div>
           )}
+          <button className="nollauspainike" onClick={nollaaKaikki}>Nollaa kaikki</button>
         </div>
     </div>
   )

@@ -1,82 +1,130 @@
-body {
+body, html {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  font-family: sans-serif;
   background-color: #f9f9f9;
-  color: #333;
 }
 
 .container {
   max-width: 800px;
-  margin: 40px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: auto;
+  padding: 1rem;
 }
 
-h1 {
+h1, h2, h3, h4 {
   text-align: center;
-  color: #444;
+  color: #333;
+}
+
+.paaomanSyottoKentta,
+.alapainikkeet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  align-items: center;
 }
 
 input[type="number"],
 input[type="date"] {
-  padding: 8px;
-  margin: 8px 5px 8px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
 }
 
 button {
-  padding: 8px 16px;
-  margin: 8px 0;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease-in-out;
+  background-color: #3498db;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #2980b9;
 }
 
-.paaomanSyottoKentta {
-  margin-bottom: 20px;
+.nollauspainike {
+  background-color: #e74c3c;
 }
 
-table.taulukko {
+.nollauspainike:hover {
+  background-color: #c0392b;
+}
+
+.taulukko {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  margin-top: 1rem;
 }
 
-table.taulukko th,
-table.taulukko td {
-  padding: 12px;
+.taulukko th,
+.taulukko td {
   border: 1px solid #ddd;
-  text-align: left;
+  padding: 0.75rem;
+  text-align: center;
 }
 
-table.taulukko th {
+.taulukko th {
   background-color: #f0f0f0;
+  font-weight: bold;
 }
 
-table.taulukko tfoot tr td {
-  padding-top: 12px;
-}
-
-.inputContainer {
-  margin-top: 20px;
+.taulukko tfoot td {
+  background-color: #fafafa;
 }
 
 .ohjeet {
-  margin-top: 20px;
-  padding: 16px;
-  background-color: #eef5ff;
-  border-left: 4px solid #007bff;
-  border-radius: 8px;
+  background-color: #fff;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.ohjeet h3 {
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .taulukko th,
+  .taulukko td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  input[type="number"],
+  input[type="date"] {
+    max-width: 100%;
+  }
+
+  button {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+  }
+
+  .ohjeet {
+    font-size: 0.95rem;
+  }
+}
+
+.keskitetty {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.virhe {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 5px;
+  text-align: center;
 }
